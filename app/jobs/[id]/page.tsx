@@ -380,37 +380,57 @@ export default function JobDetailPage() {
         </aside>
       </div>
 
-      {/* Audit */}
+      {/* Processing summary */}
       <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <h3 className="text-sm font-semibold text-slate-900">Processing details</h3>
-        {!job.audit_url ? (
-          <p className="mt-2 text-sm text-slate-500">No audit data yet.</p>
-        ) : auditError ? (
-          <p className="mt-2 text-sm text-red-600">Couldn’t load audit: {auditError}</p>
-        ) : !audit ? (
-          <p className="mt-2 text-sm text-slate-500">Loading audit…</p>
+        <h3 className="text-sm font-semibold text-slate-900">Summary</h3>
+        {job.status === 'failed' ? (
+          <p className="mt-2 text-sm text-red-600">
+            Processing didn't finish. You can re-process this photo with the panel above.
+          </p>
+        ) : job.status !== 'done' ? (
+          <p className="mt-2 text-sm text-slate-500">
+            Your photo is still being prepared with the {presetLabel} background. We refresh
+            every few seconds.
+          </p>
         ) : (
-          <dl className="mt-3 grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
-            {Object.entries(audit).map(([k, v]) => {
-              const isObj = v !== null && typeof v === 'object';
-              return (
-                <div key={k} className="contents">
-                  <dt className="text-slate-500 font-medium sm:text-right whitespace-nowrap">
-                    {k}
-                  </dt>
-                  <dd className="text-slate-900 break-words">
-                    {isObj ? (
-                      <pre className="text-xs bg-slate-50 border border-slate-200 rounded p-2 overflow-x-auto">
-                        {JSON.stringify(v, null, 2)}
-                      </pre>
-                    ) : (
-                      String(v)
-                    )}
+          <>
+            <p className="mt-2 text-sm text-slate-700">
+              Your photo's original background was replaced with the{' '}
+              <span className="font-medium text-slate-900">{presetLabel}</span> background.
+              The vehicle stays in place — only the surroundings change.
+            </p>
+            <dl className="mt-4 grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
+              <dt className="text-slate-500 sm:text-right">Background</dt>
+              <dd className="text-slate-900">{presetLabel}</dd>
+              {audit?.dimensions && typeof audit.dimensions === 'object' && (
+                <>
+                  <dt className="text-slate-500 sm:text-right">Image size</dt>
+                  <dd className="text-slate-900">
+                    {audit.dimensions.width}×{audit.dimensions.height}px
                   </dd>
-                </div>
-              );
-            })}
-          </dl>
+                </>
+              )}
+              <dt className="text-slate-500 sm:text-right">Processed</dt>
+              <dd className="text-slate-900">{relTime(job.updated_at)}</dd>
+              {job.approved === 1 && (
+                <>
+                  <dt className="text-slate-500 sm:text-right">Status</dt>
+                  <dd className="text-emerald-700 font-medium">Approved for export</dd>
+                </>
+              )}
+              {job.rejected === 1 && (
+                <>
+                  <dt className="text-slate-500 sm:text-right">Status</dt>
+                  <dd className="text-red-700 font-medium">Rejected</dd>
+                </>
+              )}
+            </dl>
+          </>
+        )}
+        {auditError && (
+          <p className="mt-3 text-xs text-slate-400">
+            Some processing details couldn't be loaded.
+          </p>
         )}
       </section>
     </div>
