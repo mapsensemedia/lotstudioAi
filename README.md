@@ -75,12 +75,25 @@ LotStudio AI guarantees that **every pixel inside the vehicle mask in the output
 
 The generator never sees the chance to repaint the car — vehicle pixels are copied straight from the source. At runtime the pipeline performs a `vehicle_pixel_diff` assertion: it recomputes `M * output` vs `M * original` and aborts the job (writing a record to `storage/audits/`) if any masked pixel differs. A passing job means zero drift on the car itself.
 
-## Future Deployment Notes
+## Deploy to Render
 
-- **UI on Vercel** — the Next.js app deploys cleanly; route the API calls to a separate worker.
-- **Pipeline behind a worker queue** — move the segmentation/composite work out of the request path onto a queue (e.g. SQS + a containerized worker, or Inngest/Trigger.dev) so long jobs don't block HTTP.
-- **Swap local storage for S3** — replace the `storage/*` filesystem helpers in `lib/` with an S3 client; the rest of the code paths take URIs and don't care.
-- **Real models behind the existing pipeline interface** — drop SAM / rembg / a proprietary segmenter in place of the mock mask generator, and a real background model (SDXL, Flux, a hosted API) in place of the preset picker. The integrity composite and `vehicle_pixel_diff` assertion stay unchanged.
+`render.yaml` is a Render Blueprint that defines a single Node web service with a 1GB persistent disk mounted at `/opt/render/project/src/storage` (so SQLite and uploaded files survive deploys and restarts).
+
+1. Push the repo to GitHub.
+2. Sign in to https://dashboard.render.com → **New +** → **Blueprint** → connect this repo → Render reads `render.yaml` automatically.
+3. After Render provisions the service, open **Environment** and set `OPENAI_API_KEY` to your key.
+4. First deploy will install native deps (`better-sqlite3`, `sharp`) and run `next build`. Expect ~3–5 minutes.
+
+Notes:
+- **Plan**: the Blueprint declares `plan: starter` ($7/mo). Persistent disks require Starter or higher — the free tier resets storage on every deploy.
+- **First request after idle** can be slow on Starter due to cold start; bump to Standard if that matters.
+- The `start` script reads `$PORT` from Render automatically.
+
+## Future deployment notes
+
+- **Worker queue**: image jobs currently run fire-and-forget inside the web service. For high volume, move the pipeline behind a queue (Inngest / Trigger.dev / a separate Render Background Worker).
+- **Object storage**: swap the `storage/*` filesystem helpers for S3 or Cloudflare R2 when scaling past one node.
+- **Postgres**: swap `better-sqlite3` for Render's managed Postgres if you need multi-instance read concurrency.
 
 ## Dependency Notes
 

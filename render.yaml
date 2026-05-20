@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: lotstudio-ai
+    runtime: node
+    region: oregon
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    autoDeploy: true
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 20.11.1
+      - key: NODE_ENV
+        value: production
+      - key: MOCK_MODE
+        value: "0"
+      - key: STORAGE_DIR
+        value: ./storage
+      - key: DATABASE_URL
+        value: ./storage/lotstudio.db
+      - key: OPENAI_API_KEY
+        sync: false
+    disk:
+      name: lotstudio-storage
+      mountPath: /opt/render/project/src/storage
+      sizeGB: 1
