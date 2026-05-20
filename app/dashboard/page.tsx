@@ -35,6 +35,7 @@ export default function DashboardPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [preset, setPreset] = useState(PRESETS[0].value);
   const [quality, setQuality] = useState<'low' | 'medium' | 'high'>('medium');
+  const [shotType, setShotType] = useState<'exterior' | 'interior' | 'detail'>('exterior');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -110,6 +111,7 @@ export default function DashboardPage() {
       files.forEach((f) => fd.append('files', f));
       fd.append('preset', preset);
       fd.append('quality', quality);
+      fd.append('shot_type', shotType);
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
       if (!res.ok) throw new Error(await res.text());
       setFiles([]);
@@ -301,19 +303,34 @@ export default function DashboardPage() {
 
         <div className="mt-4 flex flex-wrap items-end gap-3">
           <label className="text-sm">
-            <span className="block text-slate-600 mb-1">Studio background</span>
+            <span className="block text-slate-600 mb-1">Photo type</span>
             <select
-              value={preset}
-              onChange={(e) => setPreset(e.target.value)}
+              value={shotType}
+              onChange={(e) => setShotType(e.target.value as 'exterior' | 'interior' | 'detail')}
               className="rounded-md border border-slate-300 px-3 py-2 bg-white"
+              title="Exterior = replace background. Interior/Detail = clean up distractions without altering the vehicle."
             >
-              {PRESETS.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
-              ))}
+              <option value="exterior">Exterior (replace background)</option>
+              <option value="interior">Interior (clean distractions)</option>
+              <option value="detail">Detail close-up (clean distractions)</option>
             </select>
           </label>
+          {shotType === 'exterior' && (
+            <label className="text-sm">
+              <span className="block text-slate-600 mb-1">Studio background</span>
+              <select
+                value={preset}
+                onChange={(e) => setPreset(e.target.value)}
+                className="rounded-md border border-slate-300 px-3 py-2 bg-white"
+              >
+                {PRESETS.map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="text-sm">
             <span className="block text-slate-600 mb-1">Quality</span>
             <select

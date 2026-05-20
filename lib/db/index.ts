@@ -27,6 +27,7 @@ if (!global.__lotstudio_db) {
       approved INTEGER NOT NULL DEFAULT 0,
       rejected INTEGER NOT NULL DEFAULT 0,
       quality TEXT NOT NULL DEFAULT 'medium',
+      shot_type TEXT NOT NULL DEFAULT 'exterior',
       error TEXT,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
@@ -40,6 +41,9 @@ if (!global.__lotstudio_db) {
     }
     if (!cols.some((c) => c.name === 'quality')) {
       db.exec("ALTER TABLE jobs ADD COLUMN quality TEXT NOT NULL DEFAULT 'medium'");
+    }
+    if (!cols.some((c) => c.name === 'shot_type')) {
+      db.exec("ALTER TABLE jobs ADD COLUMN shot_type TEXT NOT NULL DEFAULT 'exterior'");
     }
   } catch {
     // ignore
@@ -60,6 +64,7 @@ export type Job = {
   approved: number;
   rejected: number;
   quality: 'low' | 'medium' | 'high';
+  shot_type: 'exterior' | 'interior' | 'detail';
   error: string | null;
   created_at: number;
   updated_at: number;
@@ -68,9 +73,9 @@ export type Job = {
 export function createJob(j: Omit<Job, 'created_at' | 'updated_at' | 'status' | 'approved' | 'rejected' | 'mask_path' | 'output_path' | 'thumb_path' | 'audit_path' | 'safety_score' | 'error'>) {
   const now = Date.now();
   db.prepare(
-    `INSERT INTO jobs (id, original_path, preset, quality, status, approved, rejected, created_at, updated_at)
-     VALUES (?, ?, ?, ?, 'queued', 0, 0, ?, ?)`
-  ).run(j.id, j.original_path, j.preset, j.quality, now, now);
+    `INSERT INTO jobs (id, original_path, preset, quality, shot_type, status, approved, rejected, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, 'queued', 0, 0, ?, ?)`
+  ).run(j.id, j.original_path, j.preset, j.quality, j.shot_type, now, now);
 }
 
 export function deleteJob(id: string): Job | undefined {

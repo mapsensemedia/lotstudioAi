@@ -30,6 +30,9 @@ export async function POST(req: NextRequest) {
     const qRaw = (form.get('quality')?.toString() || 'medium').trim();
     const quality: 'low' | 'medium' | 'high' =
       qRaw === 'low' || qRaw === 'high' ? qRaw : 'medium';
+    const sRaw = (form.get('shot_type')?.toString() || 'exterior').trim();
+    const shot_type: 'exterior' | 'interior' | 'detail' =
+      sRaw === 'interior' || sRaw === 'detail' ? sRaw : 'exterior';
 
     const files: File[] = [];
     for (const entry of form.getAll('files')) {
@@ -50,7 +53,7 @@ export async function POST(req: NextRequest) {
       const dest = path.join(ORIGINALS_DIR, `${id}${safeExt}`);
       const buf = Buffer.from(await file.arrayBuffer());
       fs.writeFileSync(dest, buf);
-      createJob({ id, original_path: dest, preset, quality });
+      createJob({ id, original_path: dest, preset, quality, shot_type });
       fireProcess(id);
       jobs.push({ id, status: 'queued' });
     }

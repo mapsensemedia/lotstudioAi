@@ -9,6 +9,7 @@ export type JobDTO = {
   approved: number;
   rejected: number;
   quality: 'low' | 'medium' | 'high';
+  shot_type: 'exterior' | 'interior' | 'detail';
   error: string | null;
   created_at: number;
   updated_at: number;
@@ -33,6 +34,7 @@ export function jobToDTO(j: Job): JobDTO {
     approved: j.approved,
     rejected: j.rejected,
     quality: j.quality,
+    shot_type: j.shot_type,
     error: j.error,
     created_at: j.created_at,
     updated_at: j.updated_at,

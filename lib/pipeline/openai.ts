@@ -81,6 +81,57 @@ function pickSize(width: number, height: number): '1024x1024' | '1536x1024' | '1
 }
 
 export type Quality = 'low' | 'medium' | 'high';
+export type ShotType = 'exterior' | 'interior' | 'detail';
+
+function buildInteriorPrompt(): string {
+  return [
+    'TASK: Clean up this vehicle interior photo for a dealership listing.',
+    '',
+    'ABSOLUTE RULE — VEHICLE INTERIOR IS IMMUTABLE:',
+    'Reproduce every dashboard surface, control, screen, gauge, seat, panel, stitching, leather/cloth texture, and trim element pixel-accurately. Treat the entire vehicle interior shown in the input as a fixed, locked, untouchable object.',
+    '',
+    'ALLOWED CHANGES (distractions only):',
+    '- Remove printed papers, dealer cards, floor mats with logos or text, paperwork, or any non-OEM printed materials lying on seats, floors, dashboards, or center console',
+    '- Remove dust, fingerprints, smudges, and light dirt from glass, screens, and plastic surfaces',
+    '- Remove harsh ambient reflections of the surrounding shop / building visible in windows, screens, or chrome',
+    '- Remove any people, hands, or photographer reflections visible in glass',
+    '- Even out lighting on interior surfaces slightly',
+    '',
+    'DO NOT:',
+    '- Change the steering wheel, gear lever, dashboard layout, screens, infotainment UI, instrument cluster readings, button labels, or seat design',
+    '- Re-color any surface, stitching, or trim',
+    '- Move, rotate, or rescale any control',
+    '- Replace OEM badges, logos, or screen graphics',
+    '- Make the interior look CGI, plastic, or rendered',
+    '- Invent new surfaces, new reflections, or new lighting that wasn\'t there',
+    '',
+    'STYLE: Photorealistic OEM-accurate vehicle interior photography. Natural even lighting. Not CGI.',
+  ].join('\n');
+}
+
+function buildDetailPrompt(): string {
+  return [
+    'TASK: Clean up this vehicle detail close-up for a dealership listing.',
+    '',
+    'ABSOLUTE RULE — THE SUBJECT IS IMMUTABLE:',
+    'The detail part (e.g. gear lever, instrument cluster, badge, control, wheel, infotainment screen) must be reproduced pixel-accurately. Same shape, same color, same labels, same readings, same reflections that are already on it.',
+    '',
+    'ALLOWED CHANGES:',
+    '- Remove dust, fingerprints, smudges, fibers, and lint',
+    '- Remove distracting background clutter visible at the edges of the frame',
+    '- Remove harsh ambient reflections of the surrounding shop on glass or chrome',
+    '- Even out lighting slightly',
+    '',
+    'DO NOT:',
+    '- Change any text, label, readout, number, or icon on the detail part',
+    '- Re-color any surface',
+    '- Resize, rotate, or recompose the detail part',
+    '- Make it look CGI, plastic, or rendered',
+    '- Invent new reflections, highlights, or features',
+    '',
+    'STYLE: Photorealistic OEM-accurate close-up automotive photography. Natural lighting. Not CGI.',
+  ].join('\n');
+}
 
 export async function editImageWithOpenAI(
   origBuf: Buffer,
@@ -88,6 +139,7 @@ export async function editImageWithOpenAI(
   height: number,
   preset: Preset,
   quality: Quality = 'medium',
+  shotType: ShotType = 'exterior',
 ): Promise<Buffer> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error('OPENAI_API_KEY is not set');
@@ -102,9 +154,14 @@ export async function editImageWithOpenAI(
     : await sharp(origBuf).png().toBuffer();
   const size = pickSize(width, height);
 
+  const prompt =
+    shotType === 'interior' ? buildInteriorPrompt() :
+    shotType === 'detail' ? buildDetailPrompt() :
+    buildPrompt(preset);
+
   const form = new FormData();
   form.append('model', 'gpt-image-2');
-  form.append('prompt', buildPrompt(preset));
+  form.append('prompt', prompt);
   form.append('size', size);
   form.append('n', '1');
   form.append('quality', quality);

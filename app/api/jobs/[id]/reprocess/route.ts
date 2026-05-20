@@ -26,13 +26,17 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     let preset = source.preset;
     let quality: 'low' | 'medium' | 'high' = source.quality ?? 'medium';
+    let shot_type: 'exterior' | 'interior' | 'detail' = source.shot_type ?? 'exterior';
     try {
       const text = await req.text();
       if (text) {
-        const body = JSON.parse(text) as { preset?: string; quality?: string };
+        const body = JSON.parse(text) as { preset?: string; quality?: string; shot_type?: string };
         if (body?.preset) preset = body.preset;
         if (body?.quality === 'low' || body?.quality === 'medium' || body?.quality === 'high') {
           quality = body.quality;
+        }
+        if (body?.shot_type === 'exterior' || body?.shot_type === 'interior' || body?.shot_type === 'detail') {
+          shot_type = body.shot_type;
         }
       }
     } catch {
@@ -41,7 +45,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     const newId = nanoid();
     // Reuse the source's original_path directly; the file is shared between both jobs intentionally.
-    createJob({ id: newId, original_path: source.original_path, preset, quality });
+    createJob({ id: newId, original_path: source.original_path, preset, quality, shot_type });
     fireProcess(newId);
 
     const created = getJob(newId);

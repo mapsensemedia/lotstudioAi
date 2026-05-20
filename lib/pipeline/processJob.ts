@@ -32,7 +32,7 @@ export async function processJob(jobId: string): Promise<void> {
     timings.load = Date.now() - t0;
 
     const t1 = Date.now();
-    const outBuf = await editImageWithOpenAI(origBuf, width, height, job.preset as Preset, job.quality);
+    const outBuf = await editImageWithOpenAI(origBuf, width, height, job.preset as Preset, job.quality, job.shot_type);
     timings.openai = Date.now() - t1;
 
     const t2 = Date.now();
