@@ -85,7 +85,19 @@ export default function DashboardPage() {
 
   function addFiles(list: FileList | null) {
     if (!list) return;
-    setFiles((prev) => [...prev, ...Array.from(list)]);
+    const incoming = Array.from(list).filter((f) => f.type.startsWith('image/'));
+    if (incoming.length === 0) return;
+    setFiles((prev) => [...prev, ...incoming]);
+  }
+
+  // Object URLs for instant thumbnail previews; revoked on unmount or removal.
+  const previews = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
+  useEffect(() => {
+    return () => previews.forEach((u) => URL.revokeObjectURL(u));
+  }, [previews]);
+
+  function removeFile(i: number) {
+    setFiles((prev) => prev.filter((_, idx) => idx !== i));
   }
 
   async function handleUpload() {
@@ -254,19 +266,37 @@ export default function DashboardPage() {
         </div>
 
         {files.length > 0 && (
-          <ul className="mt-3 text-sm text-slate-700 divide-y divide-slate-100 border border-slate-200 rounded-md">
+          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {files.map((f, i) => (
-              <li key={i} className="flex items-center justify-between px-3 py-2">
-                <span className="truncate">{f.name}</span>
+              <div
+                key={`${f.name}-${i}`}
+                className="group relative rounded-md overflow-hidden border border-slate-200 bg-slate-100 aspect-[4/3]"
+              >
+                <img
+                  src={previews[i]}
+                  alt={f.name}
+                  className="h-full w-full object-cover"
+                />
+                {uploading && (
+                  <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] flex items-center justify-center">
+                    <span className="h-6 w-6 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+                  </div>
+                )}
                 <button
-                  onClick={() => setFiles(files.filter((_, idx) => idx !== i))}
-                  className="text-xs text-slate-500 hover:text-red-600"
+                  type="button"
+                  onClick={() => removeFile(i)}
+                  disabled={uploading}
+                  aria-label="Remove file"
+                  className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full bg-slate-900/70 text-white text-xs leading-none opacity-0 group-hover:opacity-100 transition disabled:opacity-0"
                 >
-                  remove
+                  ×
                 </button>
-              </li>
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent px-2 py-1">
+                  <p className="truncate text-[11px] text-white">{f.name}</p>
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
 
         <div className="mt-4 flex flex-wrap items-end gap-3">

@@ -123,7 +123,7 @@ export default function JobCard({
         </svg>
       </button>
 
-      <div className="aspect-[4/3] bg-slate-100 flex items-center justify-center">
+      <div className="relative aspect-[4/3] bg-slate-100 flex items-center justify-center overflow-hidden">
         {job.thumb_url ? (
           <img
             src={job.thumb_url}
@@ -134,10 +134,23 @@ export default function JobCard({
           <img
             src={job.original_url}
             alt={`Job ${job.id}`}
-            className="h-full w-full object-cover opacity-60"
+            className={`h-full w-full object-cover ${job.status === 'done' ? '' : 'opacity-70'}`}
           />
         ) : (
           <div className="text-slate-400 text-sm">No preview</div>
+        )}
+        {(job.status === 'queued' || job.status === 'processing') && (
+          <>
+            {/* shimmer sweep */}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-shimmer" />
+            {/* center overlay */}
+            <div className="absolute inset-0 bg-slate-900/30 backdrop-blur-[1px] flex flex-col items-center justify-center gap-2">
+              <span className="h-9 w-9 rounded-full border-[3px] border-white/80 border-t-transparent animate-spin" />
+              <span className="text-xs font-medium text-white uppercase tracking-wide">
+                {job.status === 'queued' ? 'Queued' : 'Processing'}
+              </span>
+            </div>
+          </>
         )}
       </div>
 
