@@ -74,12 +74,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   </Link>
                 ))}
               </nav>
-              <Link
-                href="/dashboard"
-                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 shadow-sm"
-              >
-                Open dashboard
-              </Link>
+              <div className="flex items-center gap-3 shrink-0">
+                <Link
+                  href="/erase"
+                  className="hidden sm:inline-block rounded-md bg-white px-4 py-2 text-sm font-medium text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50"
+                >
+                  Magic Eraser
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 shadow-sm"
+                >
+                  Open dashboard
+                </Link>
+              </div>
             </div>
           </header>
           <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>

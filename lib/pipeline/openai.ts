@@ -189,3 +189,66 @@ export async function editImageWithOpenAI(
   }
   return sharp(outBuf).resize(width, height, { fit: 'cover' }).png().toBuffer();
 }
+
+const ERASE_PROMPT =
+  'Cleanly inpaint the masked area to match the surrounding surfaces, materials, lighting, and reflections. Photorealistic. No people, no text, no logos, no objects.';
+
+export async function inpaintWithMaskOpenAI(
+  origBuf: Buffer,
+  maskBuf: Buffer,
+  width: number,
+  height: number,
+  quality: Quality = 'medium',
+): Promise<Buffer> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error('OPENAI_API_KEY is not set');
+
+  const maxEdge = 1536;
+  const needsResize = Math.max(width, height) > maxEdge;
+  const imagePng = needsResize
+    ? await sharp(origBuf).resize({ width: maxEdge, height: maxEdge, fit: 'inside' }).png().toBuffer()
+    : await sharp(origBuf).png().toBuffer();
+  const imgMeta = await sharp(imagePng).metadata();
+  const targetW = imgMeta.width!;
+  const targetH = imgMeta.height!;
+
+  // Mask must match image dims and have an alpha channel.
+  const maskPng = await sharp(maskBuf)
+    .resize(targetW, targetH, { fit: 'fill' })
+    .ensureAlpha()
+    .png()
+    .toBuffer();
+
+  const size = pickSize(width, height);
+
+  const form = new FormData();
+  form.append('model', 'gpt-image-2');
+  form.append('prompt', ERASE_PROMPT);
+  form.append('size', size);
+  form.append('n', '1');
+  form.append('quality', quality);
+  form.append('image', new Blob([imagePng], { type: 'image/png' }), 'input.png');
+  form.append('mask', new Blob([maskPng], { type: 'image/png' }), 'mask.png');
+
+  const res = await fetch('https://api.openai.com/v1/images/edits', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}` },
+    body: form,
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`OpenAI images/edits failed: ${res.status} ${errText}`);
+  }
+  const data = (await res.json()) as { data: Array<{ b64_json?: string; url?: string }> };
+  const item = data.data[0];
+  let outBuf: Buffer;
+  if (item.b64_json) {
+    outBuf = Buffer.from(item.b64_json, 'base64');
+  } else if (item.url) {
+    const imgRes = await fetch(item.url);
+    outBuf = Buffer.from(await imgRes.arrayBuffer());
+  } else {
+    throw new Error('OpenAI response missing image data');
+  }
+  return sharp(outBuf).resize(width, height, { fit: 'cover' }).png().toBuffer();
+}
