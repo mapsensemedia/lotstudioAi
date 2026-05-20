@@ -11,8 +11,8 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20.11.1
-      - key: NODE_ENV
-        value: production
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"
       - key: MOCK_MODE
         value: "0"
       - key: STORAGE_DIR
