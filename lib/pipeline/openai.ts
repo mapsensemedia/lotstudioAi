@@ -150,7 +150,7 @@ export async function editImageWithOpenAI(
   shotType: ShotType = 'exterior',
 ): Promise<Buffer> {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error('OPENAI_API_KEY is not set');
+  if (!apiKey) throw new Error('service_misconfigured');
 
   // Downscale large inputs to ~1536px max edge — gpt-image accepts up to 1536,
   // and smaller inputs upload + process faster without affecting output quality
@@ -182,7 +182,7 @@ export async function editImageWithOpenAI(
   });
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(`OpenAI images/edits failed: ${res.status} ${errText}`);
+    throw new Error(`upstream_${res.status}:${errText.slice(0, 200)}`);
   }
   const data = (await res.json()) as { data: Array<{ b64_json?: string; url?: string }> };
   const item = data.data[0];
@@ -193,7 +193,7 @@ export async function editImageWithOpenAI(
     const imgRes = await fetch(item.url);
     outBuf = Buffer.from(await imgRes.arrayBuffer());
   } else {
-    throw new Error('OpenAI response missing image data');
+    throw new Error('empty_response');
   }
   return sharp(outBuf).resize(OUTPUT_W, OUTPUT_H, { fit: 'cover' }).png().toBuffer();
 }
@@ -209,7 +209,7 @@ export async function inpaintWithMaskOpenAI(
   quality: Quality = 'medium',
 ): Promise<Buffer> {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error('OPENAI_API_KEY is not set');
+  if (!apiKey) throw new Error('service_misconfigured');
 
   const maxEdge = 1536;
   const needsResize = Math.max(width, height) > maxEdge;
@@ -244,7 +244,7 @@ export async function inpaintWithMaskOpenAI(
   });
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(`OpenAI images/edits failed: ${res.status} ${errText}`);
+    throw new Error(`upstream_${res.status}:${errText.slice(0, 200)}`);
   }
   const data = (await res.json()) as { data: Array<{ b64_json?: string; url?: string }> };
   const item = data.data[0];
@@ -255,7 +255,7 @@ export async function inpaintWithMaskOpenAI(
     const imgRes = await fetch(item.url);
     outBuf = Buffer.from(await imgRes.arrayBuffer());
   } else {
-    throw new Error('OpenAI response missing image data');
+    throw new Error('empty_response');
   }
   return sharp(outBuf).resize(OUTPUT_W, OUTPUT_H, { fit: 'cover' }).png().toBuffer();
 }

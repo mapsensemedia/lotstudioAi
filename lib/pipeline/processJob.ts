@@ -67,10 +67,11 @@ export async function processJob(jobId: string): Promise<void> {
       error: null,
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error('[pipeline] job failed:', msg);
+    // Log the real cause server-side; surface only a generic message to users.
+    const real = err instanceof Error ? err.message : String(err);
+    console.error('[pipeline] job failed:', real);
     try {
-      updateJob(jobId, { status: 'failed', error: msg });
+      updateJob(jobId, { status: 'failed', error: 'Processing failed. Please try again.' });
     } catch {
       // ignore
     }

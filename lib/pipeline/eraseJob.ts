@@ -63,9 +63,10 @@ export async function eraseJob(jobId: string): Promise<void> {
       error: null,
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const real = err instanceof Error ? err.message : String(err);
+    console.error('[eraser] job failed:', real);
     try {
-      updateJob(jobId, { status: 'failed', error: msg });
+      updateJob(jobId, { status: 'failed', error: 'Processing failed. Please try again.' });
     } catch {
       // ignore
     }
