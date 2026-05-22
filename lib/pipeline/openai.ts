@@ -80,6 +80,14 @@ function pickSize(width: number, height: number): '1024x1024' | '1536x1024' | '1
   return '1024x1024';
 }
 
+// Final delivered dimensions for all generated images.
+const OUTPUT_W = 1536;
+const OUTPUT_H = 1024;
+// All OpenAI calls forced to medium quality regardless of input.
+const FIXED_QUALITY: Quality = 'medium';
+// All OpenAI calls request landscape 1536x1024 (closest to 4:3) and we crop to 1024x768.
+const FIXED_GEN_SIZE = '1536x1024' as const;
+
 export type Quality = 'low' | 'medium' | 'high';
 export type ShotType = 'exterior' | 'interior' | 'detail';
 
@@ -152,7 +160,6 @@ export async function editImageWithOpenAI(
   const pngBuf = needsResize
     ? await sharp(origBuf).resize({ width: maxEdge, height: maxEdge, fit: 'inside' }).png().toBuffer()
     : await sharp(origBuf).png().toBuffer();
-  const size = pickSize(width, height);
 
   const prompt =
     shotType === 'interior' ? buildInteriorPrompt() :
@@ -162,10 +169,11 @@ export async function editImageWithOpenAI(
   const form = new FormData();
   form.append('model', 'gpt-image-2');
   form.append('prompt', prompt);
-  form.append('size', size);
+  form.append('size', FIXED_GEN_SIZE);
   form.append('n', '1');
-  form.append('quality', quality);
+  form.append('quality', FIXED_QUALITY);
   form.append('image', new Blob([pngBuf], { type: 'image/png' }), 'input.png');
+  void quality; void width; void height;
 
   const res = await fetch('https://api.openai.com/v1/images/edits', {
     method: 'POST',
@@ -187,7 +195,7 @@ export async function editImageWithOpenAI(
   } else {
     throw new Error('OpenAI response missing image data');
   }
-  return sharp(outBuf).resize(width, height, { fit: 'cover' }).png().toBuffer();
+  return sharp(outBuf).resize(OUTPUT_W, OUTPUT_H, { fit: 'cover' }).png().toBuffer();
 }
 
 const ERASE_PROMPT =
@@ -219,16 +227,15 @@ export async function inpaintWithMaskOpenAI(
     .png()
     .toBuffer();
 
-  const size = pickSize(width, height);
-
   const form = new FormData();
   form.append('model', 'gpt-image-2');
   form.append('prompt', ERASE_PROMPT);
-  form.append('size', size);
+  form.append('size', FIXED_GEN_SIZE);
   form.append('n', '1');
-  form.append('quality', quality);
+  form.append('quality', FIXED_QUALITY);
   form.append('image', new Blob([imagePng], { type: 'image/png' }), 'input.png');
   form.append('mask', new Blob([maskPng], { type: 'image/png' }), 'mask.png');
+  void quality; void width; void height;
 
   const res = await fetch('https://api.openai.com/v1/images/edits', {
     method: 'POST',
@@ -250,5 +257,5 @@ export async function inpaintWithMaskOpenAI(
   } else {
     throw new Error('OpenAI response missing image data');
   }
-  return sharp(outBuf).resize(width, height, { fit: 'cover' }).png().toBuffer();
+  return sharp(outBuf).resize(OUTPUT_W, OUTPUT_H, { fit: 'cover' }).png().toBuffer();
 }

@@ -331,19 +331,6 @@ export default function DashboardPage() {
               </select>
             </label>
           )}
-          <label className="text-sm">
-            <span className="block text-slate-600 mb-1">Quality</span>
-            <select
-              value={quality}
-              onChange={(e) => setQuality(e.target.value as 'low' | 'medium' | 'high')}
-              className="rounded-md border border-slate-300 px-3 py-2 bg-white"
-              title="Lower quality = faster turnaround. High can take 1-2 minutes per image."
-            >
-              <option value="low">Low (fastest)</option>
-              <option value="medium">Medium (recommended)</option>
-              <option value="high">High (slowest)</option>
-            </select>
-          </label>
           <button
             onClick={handleUpload}
             disabled={uploading || files.length === 0}
