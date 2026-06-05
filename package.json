@@ -12,6 +12,8 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.10.3",
+    "@supabase/supabase-js": "^2.107.0",
     "archiver": "7.0.1",
     "better-sqlite3": "11.3.0",
     "nanoid": "5.0.7",

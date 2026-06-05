@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ToastProvider } from '@/components/Toast';
+import { getSupabaseServer } from '@/lib/supabase/server';
 
 export const metadata: Metadata = {
   title: 'LotStudio AI',
@@ -56,8 +57,12 @@ const FOOTER_COLS: { title: string; links: { label: string; href: string }[] }[]
   },
 ];
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const year = new Date().getFullYear();
+  const supabase = getSupabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   return (
     <html lang="en">
       <body>
@@ -87,6 +92,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 >
                   Open dashboard
                 </Link>
+                {user ? (
+                  <form action="/api/auth/signout" method="post">
+                    <button
+                      type="submit"
+                      className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900"
+                      title={user.email ?? ''}
+                    >
+                      Sign out
+                    </button>
+                  </form>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900"
+                  >
+                    Sign in
+                  </Link>
+                )}
               </div>
             </div>
           </header>

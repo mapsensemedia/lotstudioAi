@@ -80,13 +80,15 @@ function pickSize(width: number, height: number): '1024x1024' | '1536x1024' | '1
   return '1024x1024';
 }
 
-// Final delivered dimensions for all generated images.
+// Default delivered dimensions for exterior background-replacement.
 const OUTPUT_W = 1536;
 const OUTPUT_H = 1024;
 // All OpenAI calls forced to medium quality regardless of input.
 const FIXED_QUALITY: Quality = 'medium';
-// All OpenAI calls request landscape 1536x1024 (closest to 4:3) and we crop to 1024x768.
+// Exterior background-replacement always renders landscape.
 const FIXED_GEN_SIZE = '1536x1024' as const;
+// Hard cap so a hung upstream call can't leave a job stuck on "processing".
+const UPSTREAM_TIMEOUT_MS = 180_000;
 
 export type Quality = 'low' | 'medium' | 'high';
 export type ShotType = 'exterior' | 'interior' | 'detail';
@@ -166,20 +168,39 @@ export async function editImageWithOpenAI(
     shotType === 'detail' ? buildDetailPrompt() :
     buildPrompt(preset);
 
+  // Interior/detail must preserve the input aspect — forcing landscape makes the
+  // model invent missing area, which can hallucinate an exterior car. Exterior
+  // background-replacement intentionally stays locked to landscape.
+  const genSize =
+    shotType === 'exterior'
+      ? FIXED_GEN_SIZE
+      : pickSize(width, height);
+
   const form = new FormData();
   form.append('model', 'gpt-image-2');
   form.append('prompt', prompt);
-  form.append('size', FIXED_GEN_SIZE);
+  form.append('size', genSize);
   form.append('n', '1');
   form.append('quality', FIXED_QUALITY);
   form.append('image', new Blob([pngBuf], { type: 'image/png' }), 'input.png');
-  void quality; void width; void height;
+  void quality;
 
-  const res = await fetch('https://api.openai.com/v1/images/edits', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}` },
-    body: form,
-  });
+  const ac = new AbortController();
+  const timeout = setTimeout(() => ac.abort(), UPSTREAM_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch('https://api.openai.com/v1/images/edits', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: form,
+      signal: ac.signal,
+    });
+  } catch (err) {
+    if ((err as Error).name === 'AbortError') throw new Error('upstream_timeout');
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
   if (!res.ok) {
     const errText = await res.text();
     throw new Error(`upstream_${res.status}:${errText.slice(0, 200)}`);
@@ -195,7 +216,12 @@ export async function editImageWithOpenAI(
   } else {
     throw new Error('empty_response');
   }
-  return sharp(outBuf).resize(OUTPUT_W, OUTPUT_H, { fit: 'cover' }).png().toBuffer();
+  // Only exterior gets reframed to a fixed landscape size. Interior/detail keep
+  // whatever the model returned at the requested aspect so we don't crop the subject.
+  if (shotType === 'exterior') {
+    return sharp(outBuf).resize(OUTPUT_W, OUTPUT_H, { fit: 'cover' }).png().toBuffer();
+  }
+  return sharp(outBuf).png().toBuffer();
 }
 
 const ERASE_PROMPT =
@@ -237,11 +263,22 @@ export async function inpaintWithMaskOpenAI(
   form.append('mask', new Blob([maskPng], { type: 'image/png' }), 'mask.png');
   void quality; void width; void height;
 
-  const res = await fetch('https://api.openai.com/v1/images/edits', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}` },
-    body: form,
-  });
+  const ac = new AbortController();
+  const timeout = setTimeout(() => ac.abort(), UPSTREAM_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch('https://api.openai.com/v1/images/edits', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: form,
+      signal: ac.signal,
+    });
+  } catch (err) {
+    if ((err as Error).name === 'AbortError') throw new Error('upstream_timeout');
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
   if (!res.ok) {
     const errText = await res.text();
     throw new Error(`upstream_${res.status}:${errText.slice(0, 200)}`);
