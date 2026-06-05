@@ -16,6 +16,7 @@ export type JobDTO = {
   error: string | null;
   created_at: number;
   updated_at: number;
+  shot_type?: 'exterior' | 'interior' | 'detail';
   original_url: string | null;
   mask_url: string | null;
   output_url: string | null;
@@ -239,7 +240,7 @@ export default function JobCard({
 
       <Modal open={open} onClose={() => setOpen(false)} title={`Job ${job.id.slice(0, 8)}`}>
         {job.original_url && job.output_url ? (
-          <BeforeAfter beforeUrl={job.original_url} afterUrl={job.output_url} />
+          <BeforeAfter beforeUrl={job.original_url} afterUrl={job.output_url} shotType={job.shot_type} />
         ) : job.original_url ? (
           <div className="space-y-2">
             <img src={job.original_url} alt="Original" className="w-full rounded" />

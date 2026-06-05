@@ -235,7 +235,7 @@ export default function JobDetailPage() {
         <div className="lg:col-span-2">
           <div className="mx-auto max-w-5xl">
             {outputReady ? (
-              <BeforeAfter beforeUrl={job.original_url!} afterUrl={job.output_url!} />
+              <BeforeAfter beforeUrl={job.original_url!} afterUrl={job.output_url!} shotType={job.shot_type} />
             ) : job.original_url ? (
               <div className="space-y-3">
                 <img

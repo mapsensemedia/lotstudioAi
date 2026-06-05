@@ -2,12 +2,20 @@
 
 import { useRef, useState } from 'react';
 
+const AFTER_LABEL: Record<'exterior' | 'interior' | 'detail', string> = {
+  exterior: 'Studio background',
+  interior: 'Interior cleanup',
+  detail: 'Detail cleanup',
+};
+
 export default function BeforeAfter({
   beforeUrl,
   afterUrl,
+  shotType = 'exterior',
 }: {
   beforeUrl: string;
   afterUrl: string;
+  shotType?: 'exterior' | 'interior' | 'detail';
 }) {
   const [pos, setPos] = useState(50);
   const ref = useRef<HTMLDivElement>(null);
@@ -69,7 +77,7 @@ export default function BeforeAfter({
         Original
       </div>
       <div className="absolute right-2 top-2 rounded bg-black/60 px-2 py-0.5 text-xs text-white">
-        Studio background
+        {AFTER_LABEL[shotType]}
       </div>
     </div>
   );

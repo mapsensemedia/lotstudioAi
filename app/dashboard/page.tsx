@@ -301,20 +301,44 @@ export default function DashboardPage() {
           </div>
         )}
 
+        <div className="mt-4">
+          <div className="text-sm text-slate-600 mb-2">
+            Photo type — applied to every photo in this upload
+          </div>
+          <div className="inline-flex rounded-lg border border-slate-300 bg-slate-50 p-1 text-sm">
+            {([
+              { v: 'exterior', label: 'Exterior', sub: 'Replace background' },
+              { v: 'interior', label: 'Interior', sub: 'Clean distractions only' },
+              { v: 'detail', label: 'Detail', sub: 'Clean distractions only' },
+            ] as const).map((opt) => {
+              const active = shotType === opt.v;
+              return (
+                <button
+                  key={opt.v}
+                  type="button"
+                  onClick={() => setShotType(opt.v)}
+                  className={`rounded-md px-4 py-2 text-left transition ${
+                    active
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-700 hover:bg-white'
+                  }`}
+                >
+                  <div className="font-medium">{opt.label}</div>
+                  <div className={`text-[11px] ${active ? 'text-indigo-100' : 'text-slate-500'}`}>
+                    {opt.sub}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          {shotType !== 'exterior' && (
+            <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 inline-block">
+              {shotType === 'interior' ? 'Interior mode' : 'Detail mode'} — the vehicle and surroundings will be left intact; only distractions are cleaned up. No background is replaced.
+            </p>
+          )}
+        </div>
+
         <div className="mt-4 flex flex-wrap items-end gap-3">
-          <label className="text-sm">
-            <span className="block text-slate-600 mb-1">Photo type</span>
-            <select
-              value={shotType}
-              onChange={(e) => setShotType(e.target.value as 'exterior' | 'interior' | 'detail')}
-              className="rounded-md border border-slate-300 px-3 py-2 bg-white"
-              title="Exterior = replace background. Interior/Detail = clean up distractions without altering the vehicle."
-            >
-              <option value="exterior">Exterior (replace background)</option>
-              <option value="interior">Interior (clean distractions)</option>
-              <option value="detail">Detail close-up (clean distractions)</option>
-            </select>
-          </label>
           {shotType === 'exterior' && (
             <label className="text-sm">
               <span className="block text-slate-600 mb-1">Studio background</span>
