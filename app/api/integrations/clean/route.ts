@@ -46,14 +46,48 @@ function timingSafeEqual(a: string, b: string): boolean {
  * Response: 200 application/json
  *   { "id", "mime": "image/png", "width", "height", "image_base64" }
  */
+// Accept the key from several common header shapes and trim stray whitespace/newlines,
+// so a caller that uses Authorization: Bearer or pastes a key with a trailing newline
+// still authenticates.
+function extractKey(req: NextRequest): { key: string; source: string } {
+  const x = req.headers.get('x-api-key');
+  if (x) return { key: x.trim(), source: 'x-api-key' };
+  const auth = req.headers.get('authorization');
+  if (auth) return { key: auth.replace(/^Bearer\s+/i, '').trim(), source: 'authorization' };
+  const apikey = req.headers.get('apikey');
+  if (apikey) return { key: apikey.trim(), source: 'apikey' };
+  return { key: '', source: 'none' };
+}
+
+function mask(s: string): string {
+  return s ? `${s.slice(0, 4)}…${s.slice(-4)} (len ${s.length})` : '(empty)';
+}
+
 export async function POST(req: NextRequest) {
-  const expected = process.env.INTEGRATION_API_KEY;
+  const expected = (process.env.INTEGRATION_API_KEY ?? '').trim();
   if (!expected) {
     return NextResponse.json({ error: 'integration_not_configured' }, { status: 503 });
   }
-  const provided = req.headers.get('x-api-key') ?? '';
+  const { key: provided, source } = extractKey(req);
   if (!provided || !timingSafeEqual(provided, expected)) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+    // Diagnostic body (masks the value) so callers can see WHY auth failed.
+    return NextResponse.json(
+      {
+        error: 'unauthorized',
+        debug: {
+          header_used: source,
+          provided_key: mask(provided),
+          expected_len: expected.length,
+          hint:
+            source === 'none'
+              ? 'No key header found. Send the key as the x-api-key header.'
+              : provided.length !== expected.length
+                ? 'Key length differs from expected — wrong value, or extra quotes/spaces.'
+                : 'Same length but values differ — the key value does not match.',
+        },
+      },
+      { status: 401 },
+    );
   }
 
   let body: Record<string, unknown>;
