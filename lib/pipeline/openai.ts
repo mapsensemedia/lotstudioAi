@@ -55,14 +55,6 @@ function buildPrompt(preset: Preset): string {
     '- Do NOT make the car look CGI, plastic, or rendered',
     '- Do NOT oversaturate, over-sharpen, or over-smooth the vehicle',
     '',
-    'PAINT INTEGRITY — CRITICAL (this is where errors happen):',
-    'The body panels MUST stay perfectly smooth, clean, and one uniform color.',
-    '- Do NOT add colored patches, blotches, smudges, stains, or discoloration on any panel',
-    '- Do NOT introduce red, orange, purple, blue, green, or any colored tint, cast, or haze onto the paint',
-    '- On dark or black glossy paint, keep the surface even — reproduce only the soft gradient reflections that are ALREADY present; do NOT invent new bright, warm, or colored reflections',
-    '- Do NOT bake reflections of the old background, other cars, or people into the paint',
-    '- If unsure whether a mark belongs on the body, leave the panel clean and smooth',
-    '',
     'ALLOWED CHANGES (background and environment ONLY):',
     `- Replace the background with ${SCENE[preset]}`,
     '- Remove background distractions: other vehicles, people, poles, signs, dealership buildings, dirt, clutter, debris',
@@ -91,9 +83,9 @@ function pickSize(width: number, height: number): '1024x1024' | '1536x1024' | '1
 // Default delivered dimensions for exterior background-replacement.
 const OUTPUT_W = 1536;
 const OUTPUT_H = 1024;
-// All OpenAI calls forced to high quality — medium produced reflection/paint
-// artifacts ("patches") on glossy dark vehicles. High preserves the body better.
-const FIXED_QUALITY: Quality = 'high';
+// All OpenAI calls forced to medium quality — this gave the sharpest, cleanest
+// output in testing. (High + "smooth/even" prompt wording softened the whole image.)
+const FIXED_QUALITY: Quality = 'medium';
 // Exterior background-replacement always renders landscape.
 const FIXED_GEN_SIZE = '1536x1024' as const;
 // Hard cap so a hung upstream call can't leave a job stuck on "processing".
