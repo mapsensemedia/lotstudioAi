@@ -8,6 +8,9 @@ function isPublic(pathname: string): boolean {
   if (PUBLIC_PATHS.includes(pathname)) return true;
   if (pathname.startsWith('/_next')) return true;
   if (pathname.startsWith('/favicon')) return true;
+  // Machine-to-machine integration endpoints authenticate via the x-api-key header
+  // (checked inside each route), so they bypass the Supabase cookie gate.
+  if (pathname.startsWith('/api/integrations/')) return true;
   return false;
 }
 

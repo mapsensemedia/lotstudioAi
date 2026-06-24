@@ -21,6 +21,8 @@ services:
         value: ./storage/lotstudio.db
       - key: OPENAI_API_KEY
         sync: false
+      - key: INTEGRATION_API_KEY
+        sync: false
     disk:
       name: lotstudio-storage
       mountPath: /opt/render/project/src/storage
