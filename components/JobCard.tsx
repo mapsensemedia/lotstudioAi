@@ -16,7 +16,7 @@ export type JobDTO = {
   error: string | null;
   created_at: number;
   updated_at: number;
-  shot_type?: 'exterior' | 'interior' | 'detail';
+  shot_type?: 'exterior' | 'interior' | 'detail' | 'interior_white';
   original_url: string | null;
   mask_url: string | null;
   output_url: string | null;

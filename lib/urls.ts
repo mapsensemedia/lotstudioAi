@@ -9,7 +9,7 @@ export type JobDTO = {
   approved: number;
   rejected: number;
   quality: 'low' | 'medium' | 'high';
-  shot_type: 'exterior' | 'interior' | 'detail';
+  shot_type: 'exterior' | 'interior' | 'detail' | 'interior_white';
   error: string | null;
   created_at: number;
   updated_at: number;

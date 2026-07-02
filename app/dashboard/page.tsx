@@ -35,7 +35,7 @@ export default function DashboardPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [preset, setPreset] = useState(PRESETS[0].value);
   const [quality, setQuality] = useState<'low' | 'medium' | 'high'>('medium');
-  const [shotType, setShotType] = useState<'exterior' | 'interior' | 'detail'>('exterior');
+  const [shotType, setShotType] = useState<'exterior' | 'interior' | 'detail' | 'interior_white'>('exterior');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -309,6 +309,7 @@ export default function DashboardPage() {
             {([
               { v: 'exterior', label: 'Exterior', sub: 'Replace background' },
               { v: 'interior', label: 'Interior', sub: 'Clean distractions only' },
+              { v: 'interior_white', label: 'Interior — white bg', sub: 'White through the glass' },
               { v: 'detail', label: 'Detail', sub: 'Clean distractions only' },
             ] as const).map((opt) => {
               const active = shotType === opt.v;
@@ -331,7 +332,12 @@ export default function DashboardPage() {
               );
             })}
           </div>
-          {shotType !== 'exterior' && (
+          {shotType === 'interior_white' && (
+            <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 inline-block">
+              Interior — white background — the cabin is left intact; only what is visible outside through the windows and windshield is replaced with a clean white background.
+            </p>
+          )}
+          {(shotType === 'interior' || shotType === 'detail') && (
             <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 inline-block">
               {shotType === 'interior' ? 'Interior mode' : 'Detail mode'} — the vehicle and surroundings will be left intact; only distractions are cleaned up. No background is replaced.
             </p>

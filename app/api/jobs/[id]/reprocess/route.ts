@@ -26,7 +26,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     let preset = source.preset;
     let quality: 'low' | 'medium' | 'high' = source.quality ?? 'medium';
-    let shot_type: 'exterior' | 'interior' | 'detail' = source.shot_type ?? 'exterior';
+    let shot_type: 'exterior' | 'interior' | 'detail' | 'interior_white' = source.shot_type ?? 'exterior';
     try {
       const text = await req.text();
       if (text) {
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         if (body?.quality === 'low' || body?.quality === 'medium' || body?.quality === 'high') {
           quality = body.quality;
         }
-        if (body?.shot_type === 'exterior' || body?.shot_type === 'interior' || body?.shot_type === 'detail') {
+        if (body?.shot_type === 'exterior' || body?.shot_type === 'interior' || body?.shot_type === 'detail' || body?.shot_type === 'interior_white') {
           shot_type = body.shot_type;
         }
       }

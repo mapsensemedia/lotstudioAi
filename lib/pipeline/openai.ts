@@ -92,7 +92,7 @@ const FIXED_GEN_SIZE = '1536x1024' as const;
 const UPSTREAM_TIMEOUT_MS = 180_000;
 
 export type Quality = 'low' | 'medium' | 'high';
-export type ShotType = 'exterior' | 'interior' | 'detail';
+export type ShotType = 'exterior' | 'interior' | 'detail' | 'interior_white';
 
 function buildInteriorPrompt(): string {
   return [
@@ -117,6 +117,37 @@ function buildInteriorPrompt(): string {
     '- Invent new surfaces, new reflections, or new lighting that wasn\'t there',
     '',
     'STYLE: Photorealistic OEM-accurate vehicle interior photography. Natural even lighting. Not CGI.',
+  ].join('\n');
+}
+
+function buildInteriorWhitePrompt(): string {
+  return [
+    'TASK: Clean up this vehicle interior photo for a dealership listing, and replace ONLY the outdoor scene visible through the glass with a clean white background.',
+    '',
+    'ABSOLUTE RULE — VEHICLE INTERIOR IS IMMUTABLE:',
+    'Reproduce every dashboard surface, control, screen, gauge, seat, panel, stitching, leather/cloth texture, and trim element pixel-accurately. Treat the entire vehicle interior shown in the input as a fixed, locked, untouchable object.',
+    '',
+    'BACKGROUND REPLACEMENT (glass regions ONLY):',
+    '- Replace whatever is visible OUTSIDE the vehicle through the windshield, side windows, rear glass, and any open door opening with a clean, evenly lit, pure white background (no gradient, no sky, no trees, no other cars, no buildings, no lot).',
+    '- Keep the window frames, pillars, A-pillars, door edges, mirrors, glass edges, and any dashboard elements in front of the glass exactly as the original pixels.',
+    '- Do NOT let the white bleed onto the dashboard, screens, trim, or any cabin surface. The boundary between the white glass area and the cabin must stay crisp and match the original window openings exactly.',
+    '',
+    'ALLOWED CHANGES (distractions only, inside the cabin):',
+    '- Remove printed papers, dealer cards, floor mats with logos or text, paperwork, or any non-OEM printed materials lying on seats, floors, dashboards, or center console',
+    '- Remove dust, fingerprints, smudges, and light dirt from glass, screens, and plastic surfaces',
+    '- Remove any people, hands, or photographer reflections visible in glass',
+    '- Even out lighting on interior surfaces slightly',
+    '',
+    'DO NOT:',
+    '- Change the steering wheel, gear lever, dashboard layout, screens, infotainment UI, instrument cluster readings, button labels, or seat design',
+    '- Repaint or "fix" the display screens — leave every on-screen graphic, map, and readout exactly as the original pixels, even if it reflects the old outdoor scene',
+    '- Re-color any surface, stitching, or trim',
+    '- Move, rotate, or rescale any control',
+    '- Replace OEM badges, logos, or screen graphics',
+    '- Make the interior look CGI, plastic, or rendered',
+    '- Invent new surfaces, new reflections, or new lighting that wasn\'t there',
+    '',
+    'STYLE: Photorealistic OEM-accurate vehicle interior photography with a clean pure-white through-glass background. Natural even lighting. Not CGI.',
   ].join('\n');
 }
 
@@ -166,6 +197,7 @@ export async function editImageWithOpenAI(
 
   const prompt =
     shotType === 'interior' ? buildInteriorPrompt() :
+    shotType === 'interior_white' ? buildInteriorWhitePrompt() :
     shotType === 'detail' ? buildDetailPrompt() :
     buildPrompt(preset);
 

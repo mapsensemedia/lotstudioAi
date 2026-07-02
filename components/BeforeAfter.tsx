@@ -2,10 +2,11 @@
 
 import { useRef, useState } from 'react';
 
-const AFTER_LABEL: Record<'exterior' | 'interior' | 'detail', string> = {
+const AFTER_LABEL: Record<'exterior' | 'interior' | 'detail' | 'interior_white', string> = {
   exterior: 'Studio background',
   interior: 'Interior cleanup',
   detail: 'Detail cleanup',
+  interior_white: 'Interior · white background',
 };
 
 export default function BeforeAfter({
@@ -15,7 +16,7 @@ export default function BeforeAfter({
 }: {
   beforeUrl: string;
   afterUrl: string;
-  shotType?: 'exterior' | 'interior' | 'detail';
+  shotType?: 'exterior' | 'interior' | 'detail' | 'interior_white';
 }) {
   const [pos, setPos] = useState(50);
   const ref = useRef<HTMLDivElement>(null);

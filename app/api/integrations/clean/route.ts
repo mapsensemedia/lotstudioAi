@@ -106,8 +106,8 @@ export async function POST(req: NextRequest) {
   const preset: Preset = VALID_PRESETS.has(presetRaw) ? presetRaw : 'studio_white';
 
   const sRaw = String(body.shot_type ?? 'exterior').trim();
-  const shot_type: 'exterior' | 'interior' | 'detail' =
-    sRaw === 'interior' || sRaw === 'detail' ? sRaw : 'exterior';
+  const shot_type: 'exterior' | 'interior' | 'detail' | 'interior_white' =
+    sRaw === 'interior' || sRaw === 'detail' || sRaw === 'interior_white' ? sRaw : 'exterior';
 
   const qRaw = String(body.quality ?? 'medium').trim();
   const quality: 'low' | 'medium' | 'high' =
